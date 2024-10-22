@@ -141,9 +141,18 @@ top.genes.common <- top.genes.all %>%
   group_by(cluster) %>%
   top_n(n = 5, wt = avg_log2FC) 
 
+genes <- c("IL4R", "SELL", "CCR7", "ADK", "STK17A", 
+           "ARHGAP24", "PPP1R15A", "FOSB", "CD83", 
+           "CD44", "MALAT1", "CD74", "B2M", "MTRNR2L12",
+           "REL", "AIM2", "UBE2N", "PLP2", "TUBB",
+           "R3HDM4", "SLC25A5", "CAMK2D", "PLEKHA2",
+           "GADD45B", "KIAA0040", "FGR", "HCK", "TNFRSF1B", "FCRL3", "IGHG3",
+           "XBP1", "TNFRSF17", "A0P3", "DERL3", "IGHG1", "IL32", "CST7",
+           "NKG7", "CCL5", "GNLY")
+
 ## Figure 2b 
 DefaultAssay(bcell_1) <- "RNA"
-DotPlot(bcell_1, features = top.genes.common$gene, scale.max = 100, scale.min = 0, dot.scale = 5)  +
+DotPlot(bcell_1, features = genes, scale.max = 100, scale.min = 0, dot.scale = 5)  +
   scale_color_gradientn(colors = c("skyblue3", "white", "#770000")) +
   theme_pubr(legend = "right") + border()+ rotate_x_text(45) 
 
@@ -216,9 +225,18 @@ new.col.bcell <- c("#DC9F2D",#Naive_BC
 DimPlot(bcell_2, label = F, group.by = "general_cluster", pt.size = 0.25, cols = new.col.bcell) +
   labs(title = "B cells")
 
+
+genes2 <- c("IL4R", "SELL", "CCR7", "ADK", "STK17A", 
+           "SLC25A5", "CAMK2D", "PLEKHA2", "GADD45B", "KIAA0040", 
+           "ARHGAP24", "PPP1R15A", "FOSB", "CD83", 
+           "AIM2", "UBE2N", "PLP2", "TUBB","R3HDM4",
+           "FGR", "HCK", "TNFRSF1B", "FCRL3", "IGHG3",
+           "XBP1", "TNFRSF17", "AQP3", "DERL3", "IGHG1")
+
 #Supp Fig 2 c
 DefaultAssay(bcell_2) <- "RNA"
-DotPlot(bcell_2, features = top.genes.common$gene, scale.max = 100, scale.min = 0, dot.scale = 5)  +
+a <- DotPlot(subset(bcell_2, subset = general_cluster %in% c("Doublets B:T cells", "Doublets B:Myeloids"), invert = T), 
+             features = genes2, scale.max = 100, scale.min = 0, dot.scale = 5)  +
   scale_color_gradientn(colors = c("skyblue3", "white", "#770000")) +
   theme_pubr(legend = "right") + border()+ rotate_x_text(45) 
 
@@ -358,18 +376,15 @@ all_pop_plot_median$stage <- factor(all_pop_plot_median$stage, levels = c("basel
 writexl::write_xlsx(all_pop_plot_median, path = "new_images_def/NEW/bcell_naive_GO_nocorrect.xlsx")
 
 #PLOTS pop_plot_cl6 pop_plot_cl8 pop_plot_cl10 pop_plot_cl13_15
-cellular_1$PID_stage <- factor(cellular_1$PID_stage, levels = c("CVID:baseline_Control", "CVID:progression_Mild", "CVID:convalescence_Mild",
+pop_plot_cl6$PID_stage <- factor(pop_plot_cl6$PID_stage, levels = c("CVID:baseline_Control", "CVID:progression_Mild", "CVID:convalescence_Mild",
                                                                 "nonCVID:baseline_Control", "nonCVID:progression_Mild", "nonCVID:convalescence_Mild",
                                                                 "nonCVID:progression_Severe", "nonCVID:convalescence_Severe"))
 
-ggplot(cellular_1, aes(x=PID_stage, y=cluster, fill = mean) ) +
+ggplot(pop_plot_cl6, aes(x=PID_stage, y=cluster, fill = mean) ) +
   geom_tile(aes(fill=mean), color = "black")  +
   facet_grid(~cluster, scales = "free") +
-  #scale_fill_viridis() +GO:00096151_response to virus
-  scale_fill_gradientn(colours = c("#4267AC", "#1982C4", "#8AC926", "#FFCA3A", "#FF924C", "#FF595E")) +
-  #                        c("white", "darkred") ) +
+  scale_fill_gradientn(colours = c("#04508b", "#087ca7", "#E3B264","#FAE7C8")) +
   ggpubr::theme_pubr(legend = "right", border = T, x.text.angle = 45) 
-
 
 # US MEMORY
 memory <- subset(bcell_1, subset = general_cluster == "US_Memory_BC", invert = F)
@@ -378,13 +393,6 @@ memory <- subset(bcell_1, subset = general_cluster == "US_Memory_BC", invert = F
 #GO:00343401_response to type I interferon CLUSTER 1, 8 
 IFN <- read.table("markers/bcell_clusters/GOBP_RESPONSE_TO_TYPE_I_INTERFERON.v2023.1.Hs.grp", header = T)
 memory <- AddModuleScore(memory, features = list(unique(IFN$GOBP_RESPONSE_TO_TYPE_I_INTERFERON)), name = "cl1_cl8_response")
-
-
-#GO:0002377_immunoglobulin production CLUSTER 5, 9
-IMMUNOGLOBULIN <- read.table("markers/bcell_clusters/GOBP_IMMUNOGLOBULIN_PRODUCTION.v2023.2.Hs.grp", header = T)
-memory <- AddModuleScore(memory, features = list(unique(IMMUNOGLOBULIN$GOBP_IMMUNOGLOBULIN_PRODUCTION)),
-                         name = c("cl5_9_IFN_"), search = T)
-
 
 #GO:0034340_response to type I interferon CLUSTER 11
 BETA <- read.table("markers/bcell_clusters/GOBP_INTERFERON_BETA_PRODUCTION.v2023.2.Hs.grp", header = T)
@@ -410,12 +418,12 @@ plot <- memory@meta.data %>%
 
 #Plot por los clusters de los scores
 #Mean per stage and patient
-cl1_1 <- plot %>% #plyr::ddply(plot, "patient", summarise, media=mean(cl1_1)) %>% 
+cl11_beta1 <- plot %>% #plyr::ddply(plot, "patient", summarise, media=mean(cl1_1)) %>% 
   separate(patient, into = c("PID_Sev", "cluster", "patient"), sep = ":", remove = F, extra = "merge") %>% 
   separate(PID_Sev, into = c( "severity", "PID"), sep = "-", remove = F) %>% 
   separate(severity, into = c("stage", "severity"), sep = "_", remove = F, extra = "merge")  %>% 
   mutate(PID_stage = paste0(PID, ":", stage, "_", severity)) %>% 
-  plyr::ddply("PID_stage", summarise, mean=mean(cl1_cl8_response1), sd=sd(cl1_cl8_response1)) %>% 
+  plyr::ddply("PID_stage", summarise, mean=mean(cl11_beta1), sd=sd(cl1_cl8_response1)) %>% 
   mutate(cluster = "cl1") %>% 
   separate(PID_stage, into = c("PID", "Stage"), sep = ":",remove = F) %>% 
   separate(Stage, into = c("stage", "severity"), sep = "_") %>% 
@@ -461,7 +469,7 @@ virus_1 <- plot %>% #plyr::ddply(plot, "patient", summarise, media=mean(cl15_1))
   separate(severity, into = c("stage", "severity"), sep = "_", remove = F, extra = "merge")  %>% 
   mutate(PID_stage = paste0(PID, ":", stage, "_", severity)) %>% 
   plyr::ddply("PID_stage", summarise, mean=mean(virus_1), sd=sd(virus_1)) %>% 
-  mutate(cluster = "cl15") %>% 
+  mutate(cluster = "virus_1") %>% 
   separate(PID_stage, into = c("PID", "Stage"), sep = ":",remove = F) %>% 
   separate(Stage, into = c("stage", "severity"), sep = "_") %>% 
   mutate(group = paste0(PID_stage, "_", cluster))
@@ -469,21 +477,19 @@ virus_1 <- plot %>% #plyr::ddply(plot, "patient", summarise, media=mean(cl15_1))
 # 
 all_pop_plot_median <- rbind ( cl1_1, cl11_1, cl15_1, cl5_9_IFN_1, virus_1 )
 
-
 all_pop_plot_median$stage <- factor(all_pop_plot_median$stage, levels = c("baseline", "progression", "convalescence"))
 
 writexl::write_xlsx(all_pop_plot_median, path = "new_images_def/NEW/bcell_US_GO_mean_nocorreciton.xlsx")
 
-#PLOTS cl1_1 cl11_1 cl15_1 cl5_9_IFN_1, cl15_1
-virus_1$PID_stage <- factor(virus_1$PID_stage, levels = c("CVID:baseline_Control", "CVID:progression_Mild", "CVID:convalescence_Mild",
+#PLOTS cl11_beta1 cl11_1 cl15_1 cl5_9_IFN_1, cl15_1
+cl11_1$PID_stage <- factor(cl11_1$PID_stage, levels = c("CVID:baseline_Control", "CVID:progression_Mild", "CVID:convalescence_Mild",
                                                           "nonCVID:baseline_Control", "nonCVID:progression_Mild", "nonCVID:convalescence_Mild",
                                                           "nonCVID:progression_Severe", "nonCVID:convalescence_Severe"))
 
-ggplot(virus_1, aes(x=PID_stage, y=cluster, fill = mean) ) +
+ggplot(cl11_1, aes(x=PID_stage, y=cluster, fill = mean) ) +
   geom_tile(aes(fill=mean), color = "black")  +
   facet_grid(~cluster, scales = "free") +
   #scale_fill_viridis() +
-  scale_fill_gradientn(colours = c("#4267AC", "#1982C4", "#8AC926", "#FFCA3A", "#FF924C", "#FF595E")) +
-  #                        c("white", "darkred") ) +
+  scale_fill_gradientn(colours = c("#04508b", "#087ca7", "#E3B264","#FAE7C8")) +
   ggpubr::theme_pubr(legend = "right", border = T, x.text.angle = 45) 
 

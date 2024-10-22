@@ -5,7 +5,7 @@ library(ggpubr)
 
 # Integration cohort 1
 
-load("/ijc/LABS/BALLESTAR/DATA/DATA_CELIA/DATOS_COVID/raw/covidcvid_cohort1.RData")
+load("covidcvid_cohort1.RData")
 
 Idents(object = covidcvid) <- "sample_names" 
 all.list <-  SplitObject(covidcvid, split.by = "sample_names")
@@ -126,7 +126,6 @@ new.cluster <- c("CD8_memory", #cl 0
 names(x = new.cluster) <- levels(x = covid_cvid)
 covid_cvid <- RenameIdents(object = covid_cvid, new.cluster)
 covid_cvid$clusters <- Idents(object = covid_cvid)
-table(covid_cvid$clusters)
 
 # Annotate pDC with the metadata of myeloids reclustering
 metadata_myel <- myel_1@meta.data %>% 
